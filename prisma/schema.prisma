@@ -16,4 +16,58 @@ model Pool {
   title     String
   code      String   @unique
   createdAt DateTime @default(now())
+  ownerId   String?
+
+  participants Participant[]
+  owner        User?         @relation(fields: [ownerId], references: [id])
+}
+
+// Participant is a join table between User and Pool / tabela pivô entre User e Pool
+model Participant {
+  id     String @id @default(cuid())
+  userId String
+  poolId String
+
+  guesses Guess[]
+  user    User?   @relation(fields: [userId], references: [id])
+  pool    Pool    @relation(fields: [poolId], references: [id])
+
+  // This is a unique constraint that makes sure that a user can only participate in a pool once
+  @@unique([userId, poolId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  // bolões que o usuário participa
+  participatingAt Participant[]
+  // bolões que o usuário é dono
+  ownPools        Pool[]
+}
+
+model Game {
+  id                    String   @id @default(cuid())
+  date                  DateTime
+  firstTeamCountryCode  String
+  secondTeamCountryCode String
+
+  // nao cria uma tabela no banco de dados
+  guesses Guess[]
+}
+
+model Guess {
+  id               String   @id @default(cuid())
+  firstTeamPoints  Int
+  secondTeamPoints Int
+  createdAt        DateTime @default(now())
+
+  participant   Participant @relation(fields: [participantId], references: [id])
+  game          Game        @relation(fields: [gameId], references: [id])
+  // id do jogo que vai ficar salvo dentro da tabela de palpite
+  gameId        String
+  participantId String
 }
