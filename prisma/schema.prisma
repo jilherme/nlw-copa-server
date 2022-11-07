@@ -11,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Pool {
+model Poll {
   id        String   @id @default(cuid())
   title     String
   code      String   @unique
@@ -22,31 +22,32 @@ model Pool {
   owner        User?         @relation(fields: [ownerId], references: [id])
 }
 
-// Participant is a join table between User and Pool / tabela pivô entre User e Pool
+// Participant is a join table between User and Poll / tabela pivô entre User e Poll
 model Participant {
   id     String @id @default(cuid())
   userId String
-  poolId String
+  pollId String
 
   guesses Guess[]
-  user    User?   @relation(fields: [userId], references: [id])
-  pool    Pool    @relation(fields: [poolId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  poll    Poll    @relation(fields: [pollId], references: [id])
 
-  // This is a unique constraint that makes sure that a user can only participate in a pool once
-  @@unique([userId, poolId])
+  // This is a unique constraint that makes sure that a user can only participate in a poll once
+  @@unique([userId, pollId])
 }
 
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
+  googleId  String?  @unique
   avatarUrl String?
   createdAt DateTime @default(now())
 
   // bolões que o usuário participa
   participatingAt Participant[]
   // bolões que o usuário é dono
-  ownPools        Pool[]
+  ownPolls        Poll[]
 }
 
 model Game {
@@ -60,14 +61,17 @@ model Game {
 }
 
 model Guess {
-  id               String   @id @default(cuid())
+  id String @id @default(cuid())
+
   firstTeamPoints  Int
   secondTeamPoints Int
   createdAt        DateTime @default(now())
-
-  participant   Participant @relation(fields: [participantId], references: [id])
-  game          Game        @relation(fields: [gameId], references: [id])
   // id do jogo que vai ficar salvo dentro da tabela de palpite
-  gameId        String
-  participantId String
+  gameId           String
+  participantId    String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+  game        Game        @relation(fields: [gameId], references: [id])
+
+  @@unique([participantId, gameId])
 }
